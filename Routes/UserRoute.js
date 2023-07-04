@@ -1,13 +1,13 @@
 const express = require("express");
 const Router = express.Router();
 const path = require("path");
-const { signup } = require(path.join(
+const { signup, login, protect } = require(path.join(
   __dirname,
   "..",
   "controllers",
   "AuthController.js"
 ));
 
-Router.route("/").post(signup);
-
+Router.post("/signup", signup);
+Router.post("/login", /*login*/ protect);
 module.exports = Router;

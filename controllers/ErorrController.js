@@ -8,6 +8,14 @@ const GlobalErrorMiddleware = (err, req, res, next) => {
   }
 
   if (process.env.NODE_ENV === "production") {
+    //If Token is malformed, return meaningful message
+    if (err.name === "JsonWebTokenError") {
+      return res.status(401).json({
+        status: "fail",
+        message: "JSON token malformed. Please login again!",
+      });
+    }
+
     //If Error is ValidationError - Send A string with validations failed!
     if (err.name === "ValidationError") {
       const str = Object.values(err.errors)
