@@ -7,6 +7,7 @@ const catchAsync = require(path.join(
   "catchAsync"
 ));
 const AppError = require(path.join(__dirname, "..", "utilities", "AppError"));
+const Request = require(path.join(__dirname, "..", "models", "Requests.js"));
 
 exports.deposit = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.user.id);
@@ -95,4 +96,127 @@ exports.makeRequest = catchAsync(async (req, res, next) => {
   const { recipient, value } = req.body;
   if (!recipient || !value)
     return next(new AppError(400, "Please provide recipient and value"));
+  if (recipient === req.user.email)
+    return next(new AppError(400, "You can't request money from yourself!"));
+  const userRecipient = await User.findOne({ email: recipient });
+  const user = await User.findById(req.user.id);
+  if (!userRecipient)
+    return next(
+      new AppError(404, "Recipient not found! Please provide correct email.")
+    );
+  if (value > userRecipient.balance)
+    return next(
+      new AppError(400, "Your value is exceeding recipients balance!")
+    );
+
+  const request = await Request.create({
+    recipient: userRecipient.id,
+    receiver: user.id,
+    value,
+  });
+  user.madeRequests.push(request.id);
+  userRecipient.receivedRequests.push(request.id);
+  await user.save({ validateBeforeSave: false });
+  await userRecipient.save({ validateBeforeSave: false });
+
+  res.status(200).json({
+    status: "success",
+    message: `You have successfully requested $${value} from ${userRecipient.name} ${userRecipient.surname}. He will be notified about request shortly!`,
+  });
+});
+
+exports.acceptRequest = catchAsync(async (req, res, next) => {
+  const { requestId } = req.params;
+  const request = await Request.findById(requestId)
+    .populate("recipient")
+    .populate("receiver");
+  if (!request)
+    return next(
+      new AppError(
+        400,
+        "Something went really wrong processing your request. Please make an request again!"
+      )
+    );
+
+  if (req.user.id !== request.recipient.id)
+    return next(
+      new AppError(401, "You don't have permission to perform this operation.")
+    );
+
+  if (request.approved)
+    return next(
+      new AppError(401, "Request has been fulfilled and not valid anymore")
+    );
+  const recipient = await User.findById(request.recipient.id);
+  const receiver = await User.findById(request.receiver.id);
+
+  if (request.value > recipient.balance)
+    return next(
+      new AppError(
+        400,
+        `You don't have enough on your balance to accept this request! Please charge your balance. `
+      )
+    );
+  request.approved = true;
+  receiver.balance += request.value;
+  recipient.balance -= request.value;
+  receiver.transactions.push({
+    transactionType: "deposit",
+    value: request.value,
+  });
+  recipient.transactions.push({
+    transactionType: "withdraw",
+    value: request.value,
+  });
+
+  await request.save({ validateBeforeSave: false });
+  await recipient.save({ validateBeforeSave: false });
+  await receiver.save({ validateBeforeSave: false });
+
+  res.status(200).json({
+    status: "success",
+    message: "Requested transaction approved and completed successfully",
+    balance: recipient.balance,
+  });
+});
+
+exports.declineRequest = catchAsync(async (req, res, next) => {
+  const { requestId } = req.params;
+  const request = await Request.findById(requestId)
+    .populate("recipient")
+    .populate("receiver");
+
+  if (!request)
+    return next(
+      new AppError(400, "Something went really wrong processing your request. ")
+    );
+  if (request.recipient.id !== req.user.id)
+    return next(
+      new AppError(401, "You don't have permission to perform this operation!")
+    );
+
+  if (request.approved)
+    return next(
+      new AppError(
+        400,
+        "Request has been fulfilled already. You can't decline it now!"
+      )
+    );
+  //dodati funkcionalnost da se obrise ovaj request i sa userovih arraysa gdje su storani napravljeni requestovi
+  const recipient = await User.findById(request.recipient.id);
+  const receiver = await User.findById(request.receiver.id);
+  recipient.receivedRequests = recipient.receivedRequests.filter(
+    (id) => id.toString() !== request.id
+  );
+
+  receiver.madeRequests = receiver.madeRequests.filter(
+    (id) => id.toString() !== request.id
+  );
+  await recipient.save({ validateBeforeSave: false });
+  await receiver.save({ validateBeforeSave: false });
+  await Request.findByIdAndDelete(request.id);
+
+  res.status(204).json({
+    status: "success",
+  });
 });

@@ -7,14 +7,18 @@ const { protect } = require(path.join(
   "controllers",
   "AuthController.js"
 ));
-const { deposit, withdraw } = require(path.join(
-  __dirname,
-  "..",
-  "controllers",
-  "BalanceController.js"
-));
+const {
+  deposit,
+  withdraw,
+  makeRequest,
+  acceptRequest,
+  declineRequest,
+} = require(path.join(__dirname, "..", "controllers", "BalanceController.js"));
 
 Router.patch("/deposit", protect, deposit);
 Router.patch("/withdraw", protect, withdraw);
+Router.patch("/request", protect, makeRequest);
+Router.get("/request/:requestId", protect, acceptRequest);
+Router.delete("/request/decline/:requestId", protect, declineRequest);
 
 module.exports = Router;

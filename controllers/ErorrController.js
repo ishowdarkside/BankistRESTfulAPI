@@ -16,6 +16,13 @@ const GlobalErrorMiddleware = (err, req, res, next) => {
       });
     }
 
+    if (err.name === "CastError") {
+      return res.status(400).json({
+        status: "fail",
+        message: `Failed to query for ${err.value}`,
+      });
+    }
+
     //If Error is ValidationError - Send A string with validations failed!
     if (err.name === "ValidationError") {
       const str = Object.values(err.errors)

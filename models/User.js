@@ -89,21 +89,15 @@ const UserSchema = new mongoose.Schema({
       },
       transactionType: {
         type: String,
-        enum: ["deposit", "withdraw"],
+        enum: ["deposit", "withdraw", "request"],
       },
       value: {
         type: Number,
       },
     },
   ],
-  requests: [
-    {
-      requester: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-      value: { type: Number },
-      requestDate: { type: Date, default: new Date() },
-      isApproved: { type: Boolean, default: false },
-    },
-  ],
+  receivedRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "Request" }],
+  madeRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "Request" }],
 });
 
 UserSchema.pre("save", async function (next) {
