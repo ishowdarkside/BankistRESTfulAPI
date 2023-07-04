@@ -67,6 +67,43 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: [true, "Please provide birth year!"],
   },
+  balance: {
+    type: Number,
+    default: 0,
+  },
+  loan: {
+    type: Number,
+    default: 0,
+  },
+  depositCooldown: {
+    type: Date,
+  },
+  withdrawCooldown: {
+    type: Date,
+  },
+  transactions: [
+    {
+      transactionDate: {
+        type: Date,
+        default: new Date(),
+      },
+      transactionType: {
+        type: String,
+        enum: ["deposit", "withdraw"],
+      },
+      value: {
+        type: Number,
+      },
+    },
+  ],
+  requests: [
+    {
+      requester: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      value: { type: Number },
+      requestDate: { type: Date, default: new Date() },
+      isApproved: { type: Boolean, default: false },
+    },
+  ],
 });
 
 UserSchema.pre("save", async function (next) {

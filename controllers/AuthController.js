@@ -38,6 +38,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     email,
   });
   const token = await generateToken(user._id);
+  res.cookie("jwt", token, { httpOnly: true, secure: true });
   res.status(200).json({
     statsu: "success",
     message: "User registered successfully!",
@@ -78,5 +79,6 @@ exports.protect = catchAsync(async (req, res, next) => {
         "User who the token belongs to, doesnt exist anymore. Please login again!"
       )
     );
+  req.user = user;
   next();
 });

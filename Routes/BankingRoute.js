@@ -1,20 +1,20 @@
 const express = require("express");
 const Router = express.Router();
 const path = require("path");
-const { signup, login, protect } = require(path.join(
+const { protect } = require(path.join(
   __dirname,
   "..",
   "controllers",
   "AuthController.js"
 ));
-const { deposit } = require(path.join(
+const { deposit, withdraw } = require(path.join(
   __dirname,
   "..",
   "controllers",
   "BalanceController.js"
 ));
 
-Router.post("/signup", signup);
-Router.post("/login", login);
+Router.patch("/deposit", protect, deposit);
+Router.patch("/withdraw", protect, withdraw);
 
 module.exports = Router;

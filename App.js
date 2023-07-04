@@ -6,8 +6,8 @@ const cookieParser = require("cookie-parser");
 dotenv.config({ path: "./config.env" });
 const app = express();
 
-//User Router
 const UserRouter = require("./Routes/UserRoute");
+const BankingRouter = require("./Routes/BankingRoute");
 
 //Morgan Setup
 app.use(morgan("dev"));
@@ -20,6 +20,7 @@ app.use(cookieParser());
 
 //Using User Routing
 app.use("/api/users", UserRouter);
+app.use("/api/banking", BankingRouter);
 
 //Handling unhandled Routes
 app.use("*", (req, res, next) => {
