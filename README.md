@@ -1,7 +1,7 @@
 # Banking System RESTful API
-Project is still in progress 👷‍♂️
+The project is still in progress 👷‍♂️
 
-Built feautres so far:
+Built features so far:
 - Signup / Login
 - Authentication / Authorization
 - Deposit
