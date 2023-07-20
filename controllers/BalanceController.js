@@ -223,4 +223,33 @@ exports.declineRequest = catchAsync(async (req, res, next) => {
 
 exports.requestLoan = catchAsync(async (req, res, next) => {
   //Requestaj Loan ako nema loana
+  const { loanAmount } = req.body.loanAmount;
+  const user = await User.findById(req.user.id);
+  if (user.hasLoan)
+    return next(
+      new AppError(
+        400,
+        "You can't request a loan until you pay off your current laon!"
+      )
+    );
+  //Ako loan prelazi 140% od ukupnog balanca, baci error
+  if (loanAmount > user.balance * 1.4)
+    return next(
+      new AppError(
+        400,
+        `Loan amount exceeding account limits. Maximum amount you can  request is ${Math.round(
+          user.balance * 1.4
+        )}  `
+      )
+    );
+
+  user.loan = loanAmount;
+  user.loanRequestedAt = new Date();
+  user.hasLoan = true;
+  await user.save({ validateBeforeSave: false });
+  res.status(200).json({
+    status: "success",
+    message: `Loan requested successfully! Your balance is now updated wit hadditional $${user.loan}`,
+    balance: user.balance,
+  });
 });

@@ -98,6 +98,16 @@ const UserSchema = new mongoose.Schema({
   ],
   receivedRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "Request" }],
   madeRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "Request" }],
+  hasLoan: {
+    type: Boolean,
+    default: false,
+  },
+  loanRequestedAt: {
+    type: Date,
+  },
+  loan: {
+    type: Number,
+  },
 });
 
 UserSchema.pre("save", async function (next) {
