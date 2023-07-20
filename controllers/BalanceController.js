@@ -10,8 +10,9 @@ const AppError = require(path.join(__dirname, "..", "utilities", "AppError"));
 const Request = require(path.join(__dirname, "..", "models", "Requests.js"));
 
 exports.deposit = catchAsync(async (req, res, next) => {
+  const { depositValue } = req.body;
   const user = await User.findById(req.user.id);
-  if (!req.body.depositValue)
+  if (!depositValue)
     return next(new AppError(400, "Please provide deposit value!"));
   //If user has already deposited money and is on 5minutes cooldown,prevent from deposit
   if (
@@ -21,13 +22,18 @@ exports.deposit = catchAsync(async (req, res, next) => {
     return next(
       new AppError(400, "You can't deposit more money at the moment.")
     );
-  if (req.body.depositValue > user.balance * 1.4)
+
+  //Ako deposit prelazi 140% userovog balansa pod uslovom da je balans pozitivan, baci error
+  if (depositValue > user.balance * 1.4 && user.balance > 0)
     return next(
       new AppError(
         400,
         "You can't deposit more than 140% of your current balance!"
       )
     );
+  //Ako je negativan deposit value baci error
+  if (depositValue < 0) return next(400, "You can't deposit negative values");
+
   user.balance = user.balance + req.body.depositValue;
   //Add 5 minutes cooldown
   user.depositCooldown = new Date(new Date().getTime() + 5 * 60000);
@@ -223,7 +229,9 @@ exports.declineRequest = catchAsync(async (req, res, next) => {
 
 exports.requestLoan = catchAsync(async (req, res, next) => {
   //Requestaj Loan ako nema loana
-  const { loanAmount } = req.body.loanAmount;
+  const { loanAmount } = req.body;
+  if (!loanAmount) return next(new AppError(400, "Please input loan amount"));
+  //nema smisla ovo handle-ovat na backednu ali nvm
   const user = await User.findById(req.user.id);
   if (user.hasLoan)
     return next(
@@ -237,19 +245,45 @@ exports.requestLoan = catchAsync(async (req, res, next) => {
     return next(
       new AppError(
         400,
-        `Loan amount exceeding account limits. Maximum amount you can  request is ${Math.round(
+        `Loan amount exceeding account limits. Maximum amount you can  request is $${Math.round(
           user.balance * 1.4
-        )}  `
+        )}`
       )
     );
 
   user.loan = loanAmount;
+  user.balance += loanAmount;
   user.loanRequestedAt = new Date();
   user.hasLoan = true;
+
+  user.transactions.push({
+    transactionType: "deposit",
+    value: loanAmount,
+  });
   await user.save({ validateBeforeSave: false });
   res.status(200).json({
     status: "success",
-    message: `Loan requested successfully! Your balance is now updated wit hadditional $${user.loan}`,
+    message: `Loan requested successfully! Your balance is now updated wit additional $${user.loan}`,
+    balance: user.balance,
+  });
+});
+
+exports.payLoan = catchAsync(async (req, res, next) => {
+  const user = await User.findById(req.user.id);
+  if (!user.loan)
+    return next(new AppError(400, "You don't have any loans to pay off!"));
+
+  user.transactions.push({
+    transactionType: "withdraw",
+    value: user.loan,
+  });
+  user.hasLoan = false;
+  user.balance -= user.loan;
+  user.loan = 0;
+  await user.save({ validateBeforeSave: false });
+  return res.status(200).json({
+    status: "success",
+    message: "Loan successfully paid off!",
     balance: user.balance,
   });
 });

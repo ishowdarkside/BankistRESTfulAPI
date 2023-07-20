@@ -105,9 +105,6 @@ const UserSchema = new mongoose.Schema({
   loanRequestedAt: {
     type: Date,
   },
-  loan: {
-    type: Number,
-  },
 });
 
 UserSchema.pre("save", async function (next) {
