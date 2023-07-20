@@ -4,10 +4,14 @@ const morgan = require("morgan");
 const GlobalErrorMiddleware = require("./controllers/ErorrController");
 const cookieParser = require("cookie-parser");
 dotenv.config({ path: "./config.env" });
+const cors = require("cors");
 const app = express();
 
 const UserRouter = require("./Routes/UserRoute");
 const BankingRouter = require("./Routes/BankingRoute");
+
+//enable cors
+app.use(cors());
 
 //Morgan Setup
 app.use(morgan("dev"));

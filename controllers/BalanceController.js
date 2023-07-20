@@ -220,3 +220,7 @@ exports.declineRequest = catchAsync(async (req, res, next) => {
     status: "success",
   });
 });
+
+exports.requestLoan = catchAsync(async (req, res, next) => {
+  //Requestaj Loan ako nema loana
+});
