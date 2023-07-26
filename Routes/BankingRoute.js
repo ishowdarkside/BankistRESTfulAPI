@@ -22,7 +22,7 @@ Router.patch("/deposit", protect, deposit);
 Router.patch("/withdraw", protect, withdraw);
 Router.patch("/request", protect, makeRequest);
 Router.get("/request/:requestId", protect, acceptRequest);
-Router.delete("/request/decline/:requestId", protect, declineRequest);
+Router.get("/request/decline/:requestId", protect, declineRequest);
 Router.post("/requestLoan", protect, requestLoan);
 Router.get("/payLoan", protect, payLoan);
 

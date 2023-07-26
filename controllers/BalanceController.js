@@ -11,6 +11,7 @@ const Request = require(path.join(__dirname, "..", "models", "Requests.js"));
 
 exports.deposit = catchAsync(async (req, res, next) => {
   const { depositValue } = req.body;
+
   const user = await User.findById(req.user.id);
   if (!depositValue)
     return next(new AppError(400, "Please provide deposit value!"));
@@ -28,12 +29,23 @@ exports.deposit = catchAsync(async (req, res, next) => {
     return next(
       new AppError(
         400,
-        "You can't deposit more than 140% of your current balance!"
+        `You can't deposit more than 140% of your current balance ($${Math.round(
+          user.balance * 1.4
+        )})!`
       )
     );
   //Ako je negativan deposit value baci error
-  if (depositValue < 0) return next(400, "You can't deposit negative values");
+  if (depositValue < 0)
+    return next(new AppError(400, "You can't deposit negative values"));
 
+  //ako je deposit value veci od $10 kad user ima 0 na balansu,baci error
+  if (user.balance === 0 && depositValue > 10)
+    return next(
+      new AppError(
+        400,
+        "You can't deposit more than $10, due to your current balance state!"
+      )
+    );
   user.balance = user.balance + req.body.depositValue;
   //Add 5 minutes cooldown
   user.depositCooldown = new Date(new Date().getTime() + 5 * 60000);
@@ -46,7 +58,7 @@ exports.deposit = catchAsync(async (req, res, next) => {
   await user.save({ validateBeforeSave: false });
   res.status(200).json({
     status: "success",
-    balance: user.balance,
+    message: `You have successully deposited $${depositValue} to your account`,
   });
 });
 
@@ -80,9 +92,13 @@ exports.withdraw = catchAsync(async (req, res, next) => {
     return next(
       new AppError(
         400,
-        "You can't withdraw more than 60% of your balance at once!"
+        `You can't withdraw more than $${Math.round(
+          user.balance * 0.6
+        )} from your balance at once!`
       )
     );
+  if (withdrawValue < 0)
+    return next(new AppError(400, "Withdraw value can't be negative!"));
   //else, take money from balance,update withdrawCooldown,put transaction into array
   user.balance -= withdrawValue;
   user.withdrawCooldown = new Date(new Date().getTime() + 5 * 60000);
@@ -94,12 +110,13 @@ exports.withdraw = catchAsync(async (req, res, next) => {
   await user.save({ validateBeforeSave: false });
   res.status(200).json({
     status: "success",
-    balance: user.balance,
+    message: `You have successfully withdrew $${withdrawValue} from your account `,
   });
 });
 
 exports.makeRequest = catchAsync(async (req, res, next) => {
   const { recipient, value } = req.body;
+
   if (!recipient || !value)
     return next(new AppError(400, "Please provide recipient and value"));
   if (recipient === req.user.email)
@@ -222,8 +239,9 @@ exports.declineRequest = catchAsync(async (req, res, next) => {
   await receiver.save({ validateBeforeSave: false });
   await Request.findByIdAndDelete(request.id);
 
-  res.status(204).json({
+  res.status(200).json({
     status: "success",
+    message: "Request declined.",
   });
 });
 
@@ -263,7 +281,7 @@ exports.requestLoan = catchAsync(async (req, res, next) => {
   await user.save({ validateBeforeSave: false });
   res.status(200).json({
     status: "success",
-    message: `Loan requested successfully! Your balance is now updated wit additional $${user.loan}`,
+    message: `Loan requested successfully! Your balance is now updated with additional $${user.loan}`,
     balance: user.balance,
   });
 });

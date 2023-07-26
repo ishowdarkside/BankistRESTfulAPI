@@ -10,17 +10,16 @@ const app = express();
 const UserRouter = require("./Routes/UserRoute");
 const BankingRouter = require("./Routes/BankingRoute");
 
+//Prase cookies
+app.use(cookieParser());
 //enable cors
-app.use(cors());
+app.use(cors({ credentials: true, origin: "http://localhost:5173" }));
 
 //Morgan Setup
 app.use(morgan("dev"));
 
 //Parsing incoming JSON
 app.use(express.json());
-
-//Prase cookies
-app.use(cookieParser());
 
 //Using User Routing
 app.use("/api/users", UserRouter);

@@ -117,7 +117,7 @@ UserSchema.pre("save", async function (next) {
 
 UserSchema.pre("save", function (next) {
   if (!this.isNew) return next();
-  this.birthYear = new Date(this.birthYear).toISOString();
+  //this.birthYear = new Date(this.birthYear).toISOString();
   next();
 });
 
