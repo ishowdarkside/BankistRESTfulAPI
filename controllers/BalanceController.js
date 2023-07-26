@@ -249,6 +249,8 @@ exports.requestLoan = catchAsync(async (req, res, next) => {
   //Requestaj Loan ako nema loana
   const { loanAmount } = req.body;
   if (!loanAmount) return next(new AppError(400, "Please input loan amount"));
+  if (loanAmount < 0)
+    return next(new AppError(400, "You can't request negative loan!"));
   //nema smisla ovo handle-ovat na backednu ali nvm
   const user = await User.findById(req.user.id);
   if (user.hasLoan)
