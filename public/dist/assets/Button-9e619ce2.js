@@ -1,0 +1,1 @@
+import{j as n}from"./index-a1aee26a.js";const a="_primary_1pku5_1",c="_secondary_1pku5_18",e={primary:a,secondary:c};function m({children:r,onClick:s,type:t,disabled:o}){return n.jsx("button",{onClick:s,className:e[t],disabled:o,children:r})}export{m as B};

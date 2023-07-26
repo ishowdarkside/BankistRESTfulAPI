@@ -5,6 +5,7 @@ const GlobalErrorMiddleware = require("./controllers/ErorrController");
 const cookieParser = require("cookie-parser");
 dotenv.config({ path: "./config.env" });
 const cors = require("cors");
+const path = require("path");
 const app = express();
 
 const UserRouter = require("./Routes/UserRoute");
@@ -26,10 +27,12 @@ app.use("/api/users", UserRouter);
 app.use("/api/banking", BankingRouter);
 
 //Handling unhandled Routes
-app.use("*", (req, res, next) => {
-  res.status(404).json({ status: "fail", message: "Whoops, route not found!" });
-});
 
+//serve static files
+app.use(express.static("./public/dist"));
+app.use("*", (req, res, next) => {
+  res.sendFile(path.join(__dirname, "public", "dist", "index.html"));
+});
 //Catching all Errors in Global Error middleware function
 app.use(GlobalErrorMiddleware);
 
