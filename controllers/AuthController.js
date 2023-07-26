@@ -66,7 +66,9 @@ exports.login = catchAsync(async (req, res, next) => {
 });
 
 exports.protect = catchAsync(async (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")?.[1]?.split("=")[1];
+  const token = req.cookies.jwt;
+  console.log(req.cookies);
+
   if (!token)
     return next(new AppError(401, "You are not logged in! Please login."));
 
@@ -96,7 +98,7 @@ exports.protect = catchAsync(async (req, res, next) => {
 });
 
 exports.verify = catchAsync(async (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")?.[1].split("=")[1];
+  const token = req.cookies.jwt;
 
   if (!token)
     return next(new AppError(401, "You are not logged in! Please login."));
