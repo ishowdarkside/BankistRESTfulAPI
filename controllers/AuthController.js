@@ -29,6 +29,8 @@ exports.signup = catchAsync(async (req, res, next) => {
   const { name, surname, password, passwordConfirm, birthYear, email } =
     req.body;
 
+  if (new Date().getFullYear() - new Date(birthYear).getFullYear() < 18)
+    return next(new AppError(401, "You must be at least 18 to register"));
   const user = await User.create({
     name,
     surname,
@@ -39,7 +41,6 @@ exports.signup = catchAsync(async (req, res, next) => {
   });
   const token = await generateToken(user._id);
   res.cookie("jwt", token);
-  res.cookie("JEBEMT", "MAJKU");
 
   res.status(200).json({
     status: "success",
