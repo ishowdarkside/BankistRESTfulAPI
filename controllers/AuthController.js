@@ -40,7 +40,9 @@ exports.signup = catchAsync(async (req, res, next) => {
     email,
   });
   const token = await generateToken(user._id);
-  res.cookie("jwt", token);
+  res.cookie("jwt", token, {
+    expires: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000),
+  });
 
   res.status(200).json({
     status: "success",
@@ -58,7 +60,9 @@ exports.login = catchAsync(async (req, res, next) => {
   const compared = await bcrypt.compare(req.body.password, user.password);
   if (!compared) return next(new AppError(401, "Invalid email/password"));
   const token = await generateToken(user.id);
-  res.cookie("jwt", token);
+  res.cookie("jwt", token, {
+    expires: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000),
+  });
   return res.status(200).json({
     status: "success",
     message: "Authorized",
